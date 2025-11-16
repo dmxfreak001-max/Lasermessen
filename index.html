@@ -130,10 +130,6 @@
     </select>
   </label>
 
-  <label>Fahrtrichtung:
-    <select id="richtung"></select>
-  </label>
-
   <div class="row">
     <div class="col"><label>Messorgan 1: <input type="text" id="messorgan1"></label></div>
     <div class="col"><label>Messorgan 2: <input type="text" id="messorgan2"></label></div>
@@ -157,6 +153,10 @@
     <div class="col"><label>Km/h: <input type="number" id="kmh" required></label></div>
     <div class="col"><label>Meter: <input type="number" id="meter" required></label></div>
     <div class="col">
+
+   <label>Fahrtrichtung:
+    <select id="richtung"></select>
+  </label>
       <label>Uhrzeit: 
         <input type="time" id="uhrzeit" required>
         <button type="button" id="jetztBtn">Jetzt</button>
@@ -379,4 +379,5 @@ autocomplete(document.getElementById('farbe'), farben, document.getElementById('
 
 </body>
 </html>
+
 
