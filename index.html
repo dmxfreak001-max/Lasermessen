@@ -15,7 +15,7 @@
   }
 
   .container {
-    max-width: 430px; /* passend für iPhone 14 */
+    max-width: 430px;
     margin: 10px auto;
     background: #fff;
     padding: 20px;
@@ -83,7 +83,7 @@
     top: 0;
   }
 
-  /* Autocomplete Styles */
+  /* Autocomplete Vorschlagsliste */
   .autocomplete-suggestions {
     border: 1px solid #ccc;
     background: white;
@@ -104,7 +104,7 @@
     background-color: #bde4ff;
   }
 
-  /* Flexbox für kleine Displays */
+  /* Layout */
   .row { display: flex; flex-wrap: wrap; gap: 10px; }
   .col { flex: 1 1 48%; min-width: 48%; }
 
@@ -125,15 +125,32 @@
       <option value="">--Ort wählen--</option>
       <option value="Wien 18., Hasenauerstraße">Wien 18., Hasenauerstraße</option>
       <option value="Wien 18., Scheibenbergstraße">Wien 18., Scheibenbergstraße</option>
-      <option value="Ort B">Ort B</option>
-      <option value="Ort C">Ort C</option>
+      <option value="Wien 18., Peter-Jordan Straße">Wien 18., Peter-Jordan Straße</option>
+      <option value="Wien 18., Herbeckstraße">Wien 18., Herbeckstraße</option>
     </select>
   </label>
 
   <div class="row">
-    <div class="col"><label>Messorgan 1: <input type="text" id="messorgan1"></label></div>
-    <div class="col"><label>Messorgan 2: <input type="text" id="messorgan2"></label></div>
-    <div class="col"><label>Messorgan 3: <input type="text" id="messorgan3"></label></div>
+    <div class="col">
+      <label>Messorgan 1:
+        <input type="text" id="messorgan1" autocomplete="off">
+        <div id="messorgan1Suggestions" class="autocomplete-suggestions"></div>
+      </label>
+    </div>
+
+    <div class="col">
+      <label>Messorgan 2:
+        <input type="text" id="messorgan2" autocomplete="off">
+        <div id="messorgan2Suggestions" class="autocomplete-suggestions"></div>
+      </label>
+    </div>
+
+    <div class="col">
+      <label>Messorgan 3:
+        <input type="text" id="messorgan3" autocomplete="off">
+        <div id="messorgan3Suggestions" class="autocomplete-suggestions"></div>
+      </label>
+    </div>
   </div>
 
   <label>Kennzeichen: <input type="text" id="kennzeichen" required></label>
@@ -192,6 +209,7 @@ const form = document.getElementById('fahrtForm');
 const tableBody = document.querySelector('#fahrtTable tbody');
 const fahrtListe = [];
 
+// Fahrtrichtungen je Ort
 const ortFahrtrichtungen = {
   "Wien 18., Hasenauerstraße": ["Türkenschanzplatz", "Gymnasiumstraße"],
   "Wien 18., Scheibenbergstraße": ["Gersthofer Straße", "Bastiengasse"],
@@ -215,12 +233,12 @@ oertlichkeitDropdown.addEventListener('change', () => {
   }
 });
 
-// "Jetzt"-Button
+// Jetzt-Button
 document.getElementById('jetztBtn').addEventListener('click', () => {
   const jetzt = new Date();
-  const stunden = String(jetzt.getHours()).padStart(2, '0');
-  const minuten = String(jetzt.getMinutes()).padStart(2, '0');
-  document.getElementById('uhrzeit').value = `${stunden}:${minuten}`;
+  const hh = String(jetzt.getHours()).padStart(2, '0');
+  const mm = String(jetzt.getMinutes()).padStart(2, '0');
+  document.getElementById('uhrzeit').value = `${hh}:${mm}`;
 });
 
 // Speichern
@@ -237,13 +255,8 @@ form.addEventListener('submit', function(e) {
   };
   fahrtListe.push(fahrt);
   updateTable();
-  document.getElementById('kennzeichen').value = '';
-  document.getElementById('marke').value = '';
-  document.getElementById('farbe').value = '';
-  document.getElementById('kmh').value = '';
-  document.getElementById('meter').value = '';
-  document.getElementById('uhrzeit').value = '';
-  document.getElementById('richtung').selectedIndex = 0;
+  form.reset();
+  richtungDropdown.innerHTML = '';
 });
 
 function updateTable() {
@@ -265,7 +278,7 @@ function updateTable() {
 
 // Zurücksetzen
 document.getElementById('zuruecksetzen').addEventListener('click', () => {
-  document.getElementById('fahrtForm').reset();
+  form.reset();
   richtungDropdown.innerHTML = '';
   fahrtListe.length = 0;
   updateTable();
@@ -275,19 +288,19 @@ document.getElementById('zuruecksetzen').addEventListener('click', () => {
 function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  const oertlichkeit = document.getElementById('oertlichkeit').value;
-  const mess1 = document.getElementById('messorgan1').value;
-  const mess2 = document.getElementById('messorgan2').value;
-  const mess3 = document.getElementById('messorgan3').value;
+  const oert = document.getElementById('oertlichkeit').value;
+  const m1 = document.getElementById('messorgan1').value;
+  const m2 = document.getElementById('messorgan2').value;
+  const m3 = document.getElementById('messorgan3').value;
 
   doc.setFontSize(18);
-  doc.text("Fahrtenliste", 14, 22);
+  doc.text("Lasermessungen", 14, 22);
   doc.setFontSize(12);
   doc.text(`Erstellt: ${new Date().toLocaleString()}`, 14, 30);
-  doc.text(`Örtlichkeit: ${oertlichkeit}`, 14, 40);
-  doc.text(`Messorgan 1: ${mess1}`, 14, 50);
-  doc.text(`Messorgan 2: ${mess2}`, 14, 60);
-  doc.text(`Messorgan 3: ${mess3}`, 14, 70);
+  doc.text(`Örtlichkeit: ${oert}`, 14, 40);
+  doc.text(`Messorgan 1: ${m1}`, 14, 50);
+  doc.text(`Messorgan 2: ${m2}`, 14, 60);
+  doc.text(`Messorgan 3: ${m3}`, 14, 70);
 
   const columns = ["Kennzeichen", "Marke", "Farbe", "Km/h", "Meter", "Uhrzeit", "Fahrtrichtung"];
   const rows = fahrtListe.map(f => [f.kennzeichen, f.marke, f.farbe, f.kmh, f.meter, f.uhrzeit, f.richtung]);
@@ -297,34 +310,21 @@ function generatePDF() {
     head: [columns],
     body: rows,
     styles: { fontSize: 10 },
-    headStyles: { fillColor: [100, 149, 237] },
-    didDrawPage: function () {
-      const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
-      doc.setFontSize(10);
-      doc.text(`Seite ${pageNumber}`, 200, 290, { align: 'right' });
-    }
+    headStyles: { fillColor: [100, 149, 237] }
   });
-
-  const finalY = doc.lastAutoTable.finalY || 80;
-  doc.setFontSize(12);
-  doc.text(`${fahrtListe.length} Fahrzeuge gemessen`, 14, finalY + 10);
 
   return doc;
 }
 
-// PDF speichern mit dynamischem Dateinamen
 document.getElementById('exportPDF').addEventListener('click', () => {
   const doc = generatePDF();
-  const oertlichkeit = document.getElementById('oertlichkeit').value;
-  const heute = new Date();
-  const tag = String(heute.getDate()).padStart(2,'0');
-  const monat = String(heute.getMonth()+1).padStart(2,'0');
-  const jahr = heute.getFullYear();
-  const datum = `${tag}.${monat}.${jahr}`;
-  doc.save(`${datum}_${oertlichkeit}.pdf`);
+  const oert = document.getElementById('oertlichkeit').value;
+  const d = new Date();
+  const date = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+  doc.save(`${date}_${oert}.pdf`);
 });
 
-// Autocomplete
+// --- Autocomplete Funktion ---
 function autocomplete(inputElem, suggestionsArray, containerElem) {
   let currentFocus = -1;
 
@@ -346,7 +346,9 @@ function autocomplete(inputElem, suggestionsArray, containerElem) {
         containerElem.appendChild(div);
       });
       containerElem.style.display = filtered.length ? 'block' : 'none';
-    } else { containerElem.style.display = 'none'; }
+    } else {
+      containerElem.style.display = 'none';
+    }
   });
 
   inputElem.addEventListener('keydown', (e) => {
@@ -367,18 +369,35 @@ function autocomplete(inputElem, suggestionsArray, containerElem) {
 
   function removeActive(items) { items.forEach(item => item.classList.remove('autocomplete-active')); }
 
-  document.addEventListener('click', (e) => { if (e.target !== inputElem) containerElem.style.display = 'none'; });
+  document.addEventListener('click', (e) => {
+    if (e.target !== inputElem) containerElem.style.display = 'none';
+  });
 }
 
+// --- Vorschlagslisten ---
 const marken = ["Volkswagen","Toyota","Mercedes","BMW","Renault","Peugeot","Škoda","Ford","Audi","Fiat","Opel/Vauxhall","Hyundai","Kia","Nissan","Seat"];
 const farben = ["Schwarz","Weiß","Silber","Grau","Blau","Rot","Grün","Gelb","Braun","Orange","Beige","Violett"];
 
+// Messorgane – kannst du beliebig erweitern!
+const messorgane = [
+  "Dornstauder, Insp.",
+  "Schrom, Asp.",
+  "Besenhofer, Asp.",
+  "Mise, Insp.",
+  "Markovic, Insp.",
+  "Todt, Insp.",
+  "Spitzer, RvI."
+  "Veselko, RvI."
+
+];
+
 autocomplete(document.getElementById('marke'), marken, document.getElementById('markeSuggestions'));
 autocomplete(document.getElementById('farbe'), farben, document.getElementById('farbeSuggestions'));
+autocomplete(document.getElementById('messorgan1'), messorgane, document.getElementById('messorgan1Suggestions'));
+autocomplete(document.getElementById('messorgan2'), messorgane, document.getElementById('messorgan2Suggestions'));
+autocomplete(document.getElementById('messorgan3'), messorgane, document.getElementById('messorgan3Suggestions'));
+
 </script>
 
 </body>
 </html>
-
-
-
