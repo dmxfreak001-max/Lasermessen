@@ -17,22 +17,40 @@
   h2, h3 { text-align: center; color: #333; }
   label { display: block; margin-top: 15px; font-weight: bold; font-size: 16px; }
   input, select { margin-top: 5px; padding: 10px; width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; }
-  button { width: 48%; padding: 14px 0; margin: 10px 1% 0 1%; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+
+  /* Buttons */
+  button { padding: 14px 0; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
   button:hover { opacity: .9; }
   #speichern { background-color: #4CAF50; color: #fff; }
   #zuruecksetzen { background-color: #f44336; color: #fff; }
-  #exportPDF { background-color: #2196F3; color: #fff; }
+  #exportPDF { background-color: #2196F3; color: #fff; width: 100%; margin-top: 10px; }
+
   table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; display: block; overflow-x: auto; }
   th, td { border: 1px solid #ddd; padding: 8px; text-align: left; min-width: 100px; }
   th { background-color: #4CAF50; color: white; position: sticky; top: 0; }
+
   .autocomplete-wrapper { position: relative; }
   .autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 8px; max-height: 180px; overflow-y: auto; z-index: 9999; display: none; }
   .autocomplete-suggestion { padding: 10px; cursor: pointer; }
   .autocomplete-suggestion:hover, .autocomplete-suggestion.active { background-color: #bde4ff; }
   .autocomplete-highlight { font-weight: bold; color: #0077cc; }
+
   .row { display: flex; flex-wrap: wrap; gap: 10px; }
   .col { flex: 1 1 48%; min-width: 48%; }
-  @media (max-width: 430px) { .col { flex: 1 1 100%; min-width: 100%; } button { width: 100%; margin-top: 10px; } }
+
+  /* Uhrzeit + Jetzt + Einträge */
+  .time-row { display: flex; align-items: center; gap: 10px; }
+  .time-row input[type="time"] { width: 120px; flex-shrink: 0; }
+  #jetztBtn { width: auto; padding: 10px 15px; margin: 0; }
+  #eintraege { width: 80px; padding: 10px; text-align: center; background: #eee; border-radius: 10px; font-weight: bold; }
+
+  /* Speichern und Zurücksetzen nebeneinander */
+  .button-row { display: flex; gap: 10px; margin-top: 15px; }
+  .button-row button { flex: 1; }
+
+  @media (max-width: 430px) { 
+    .col { flex: 1 1 100%; min-width: 100%; } 
+  }
 </style>
 </head>
 <body>
@@ -117,18 +135,23 @@
         <select id="richtung" enterkeyhint="next"></select>
       </label>
 
-      <label>Uhrzeit:
+      <label>Uhrzeit:</label>
+      <div class="time-row">
         <input type="time" id="uhrzeit" required enterkeyhint="done">
         <button type="button" id="jetztBtn">Jetzt</button>
-      </label>
+        <input type="text" id="eintraege" value="0" readonly>
+      </div>
     </div>
   </div>
 
-  <button type="submit" id="speichern">Speichern</button>
-  <button type="button" id="zuruecksetzen">Zurücksetzen</button>
+  <div class="button-row">
+    <button type="submit" id="speichern">Speichern</button>
+    <button type="button" id="zuruecksetzen">Zurücksetzen</button>
+  </div>
+
 </form>
 
-<h3>Liste der Fahrten</h3>
+<h3>Messungen:</h3>
 <table id="fahrtTable">
   <thead>
     <tr>
@@ -152,6 +175,13 @@
 const fahrtListe = [];
 const tableBody = document.querySelector("#fahrtTable tbody");
 
+const eintraegeFeld = document.getElementById("eintraege");
+
+function updateEintraege() {
+  eintraegeFeld.value = fahrtListe.length;
+}
+
+/* Fahrtrichtungen */
 const ortFahrtrichtungen = {
   "Wien 18., Hasenauerstraße": ["Türkenschanzplatz", "Gymnasiumstraße"],
   "Wien 18., Scheibenbergstraße": ["Gersthofer Straße", "Bastiengasse"],
@@ -184,7 +214,8 @@ oertlichkeitDropdown.addEventListener("change", updateRichtungen);
 /* Jetzt-Button */
 document.getElementById("jetztBtn").addEventListener("click", () => {
   const n = new Date();
-  document.getElementById("uhrzeit").value = `${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
+  document.getElementById("uhrzeit").value =
+    `${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
 });
 
 /* Speichern */
@@ -201,8 +232,8 @@ document.getElementById("fahrtForm").addEventListener("submit", e => {
   };
   fahrtListe.push(fahrt);
   updateTable();
+  updateEintraege();
 
-  // Messwerte zurücksetzen, Örtlichkeit, Messorgane & Fahrtrichtung bleiben
   kennzeichen.value = "";
   marke.value = "";
   farbe.value = "";
@@ -233,6 +264,7 @@ function updateTable() {
 document.getElementById("zuruecksetzen").addEventListener("click", () => {
   fahrtListe.length = 0;
   updateTable();
+  updateEintraege();
   document.getElementById("fahrtForm").reset();
   richtungDropdown.innerHTML = "";
 });
@@ -245,12 +277,12 @@ function generatePDF() {
   doc.setFontSize(18);
   doc.text("Lasermessungen", 14, 22);
 
-  // Örtlichkeit & Messorgane
-  doc.setFontSize(12);
   const oertlichkeit = oertlichkeitDropdown.value || "Ort unbekannt";
   const messorgan1 = document.getElementById("messorgan1").value || "-";
   const messorgan2 = document.getElementById("messorgan2").value || "-";
   const messorgan3 = document.getElementById("messorgan3").value || "-";
+
+  doc.setFontSize(12);
   doc.text(`Örtlichkeit: ${oertlichkeit}`, 14, 32);
   doc.text(`Messorgan 1: ${messorgan1}`, 14, 40);
   doc.text(`Messorgan 2: ${messorgan2}`, 14, 48);
@@ -258,12 +290,13 @@ function generatePDF() {
 
   const columns = ["Kennzeichen","Marke","Farbe","Km/h","Meter","Uhrzeit","Fahrtrichtung"];
   const startY = 64;
-  const rows = fahrtListe.map((f,i) => [f.kennzeichen,f.marke,f.farbe,f.kmh,f.meter,f.uhrzeit,f.richtung]);
+  const rows = fahrtListe.map(f => [
+    f.kennzeichen, f.marke, f.farbe, f.kmh, f.meter, f.uhrzeit, f.richtung
+  ]);
 
   doc.autoTable({ startY, head: [columns], body: rows });
 
   const finalY = doc.lastAutoTable.finalY || startY;
-  doc.setFontSize(12);
   doc.text(`Gesamtanzahl der gemessenen Fahrzeuge: ${fahrtListe.length}`, 14, finalY + 10);
 
   const datum = new Date();
@@ -286,30 +319,69 @@ function autocomplete(inputElem, suggestions) {
     container.innerHTML = "";
     currentIndex = -1;
     if (!val) { container.style.display = "none"; return; }
-    const filtered = suggestions.filter(s => s.toLowerCase().includes(val));
+
+    /* Änderung: NUR Treffer, die mit Eingabe beginnen */
+    const filtered = suggestions.filter(s => 
+      s.toLowerCase().startsWith(val)
+    );
+
     if (!filtered.length) { container.style.display = "none"; return; }
+
     filtered.forEach(entry => {
       const div = document.createElement("div");
       div.className = "autocomplete-suggestion";
-      const regex = new RegExp(`(${val})`, "ig");
+
+      const regex = new RegExp(`^(${val})`, "i");
       div.innerHTML = entry.replace(regex, "<span class='autocomplete-highlight'>$1</span>");
-      div.addEventListener("click", () => { inputElem.value = entry; container.style.display = "none"; });
+
+      div.addEventListener("click", () => { 
+        inputElem.value = entry; 
+        container.style.display = "none"; 
+      });
+
       container.appendChild(div);
     });
+
     container.style.display = "block";
   }
 
-  inputElem.addEventListener("input", () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(updateList, 120); });
+  inputElem.addEventListener("input", () => { 
+    clearTimeout(debounceTimer); 
+    debounceTimer = setTimeout(updateList, 120); 
+  });
+
   inputElem.addEventListener("keydown", e => {
     const items = [...container.querySelectorAll(".autocomplete-suggestion")];
     if (!items.length) return;
-    if (e.key === "ArrowDown") { currentIndex = (currentIndex + 1) % items.length; updateActive(items); e.preventDefault(); }
-    if (e.key === "ArrowUp") { currentIndex = (currentIndex - 1 + items.length) % items.length; updateActive(items); e.preventDefault(); }
-    if (e.key === "Enter") { e.preventDefault(); if (currentIndex >= 0) items[currentIndex].click(); }
-    if (e.key === "Escape") { container.style.display = "none"; }
+
+    if (e.key === "ArrowDown") {
+      currentIndex = (currentIndex + 1) % items.length;
+      updateActive(items);
+      e.preventDefault();
+    }
+    if (e.key === "ArrowUp") {
+      currentIndex = (currentIndex - 1 + items.length) % items.length;
+      updateActive(items);
+      e.preventDefault();
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (currentIndex >= 0) items[currentIndex].click();
+    }
+    if (e.key === "Escape") {
+      container.style.display = "none";
+    }
   });
-  function updateActive(items) { items.forEach(i => i.classList.remove("active")); if (currentIndex >= 0) items[currentIndex].classList.add("active"); }
-  document.addEventListener("click", e => { if (!inputElem.parentElement.contains(e.target)) container.style.display = "none"; });
+
+  function updateActive(items) {
+    items.forEach(i => i.classList.remove("active"));
+    if (currentIndex >= 0) items[currentIndex].classList.add("active");
+  }
+
+  document.addEventListener("click", e => {
+    if (!inputElem.parentElement.contains(e.target))
+      container.style.display = "none";
+  });
 }
 
 const marken = ["Volkswagen","Toyota","Mercedes","BMW","Renault","Peugeot","Škoda","Ford","Audi","Fiat","Opel","Hyundai","Kia","Nissan","Seat"];
@@ -322,16 +394,14 @@ autocomplete(document.getElementById("messorgan1"), messorgane);
 autocomplete(document.getElementById("messorgan2"), messorgane);
 autocomplete(document.getElementById("messorgan3"), messorgane);
 
-/* iPhone: Enter -> nächstes Feld */
+/* iPhone Enter → nächstes Feld */
 const allInputs = Array.from(document.querySelectorAll("input, select")).filter(el => !el.disabled && el.type !== "hidden");
 allInputs.forEach((el, index) => {
   el.addEventListener("keydown", e => {
     if (e.key === "Enter") {
       e.preventDefault();
       let next = allInputs[index + 1];
-      if (!next) return;
-      next.focus();
-      if (next.select) setTimeout(() => next.select(), 10);
+      if (next) next.focus();
     }
   });
 });
