@@ -299,14 +299,14 @@ document.getElementById("fahrtForm").addEventListener("submit", e => {
   fahrtListe.push(fahrt);
   updateTable();
 
-  // Nur die Eingaben für die Messungen zurücksetzen, Oertlichkeit & Messorgane bleiben
+  // Nur die Eingaben für die Messungen zurücksetzen, Oertlichkeit, Messorgane & Fahrtrichtung bleiben
   kennzeichen.value = "";
   marke.value = "";
   farbe.value = "";
   kmh.value = "";
   meter.value = "";
   uhrzeit.value = "";
-  richtungDropdown.innerHTML = "";
+  // richtungDropdown.innerHTML = ""; <-- entfällt
 });
 
 /* Tabelle aktualisieren */
@@ -503,3 +503,4 @@ allInputs.forEach((el, index) => {
 
 </body>
 </html>
+
