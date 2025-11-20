@@ -184,7 +184,7 @@ oertlichkeitDropdown.addEventListener("change", updateRichtungen);
 /* Jetzt-Button */
 document.getElementById("jetztBtn").addEventListener("click", () => {
   const n = new Date();
-  document.getElementById("uhrzeit").value = `${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
+  document.getElementById("uhrzeit").value = ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")};
 });
 
 /* Speichern */
@@ -216,7 +216,7 @@ function updateTable() {
   tableBody.innerHTML = "";
   fahrtListe.forEach(f => {
     const row = document.createElement("tr");
-    row.innerHTML = `
+    row.innerHTML = 
       <td>${f.kennzeichen}</td>
       <td>${f.marke}</td>
       <td>${f.farbe}</td>
@@ -224,7 +224,7 @@ function updateTable() {
       <td>${f.meter}</td>
       <td>${f.uhrzeit}</td>
       <td>${f.richtung}</td>
-    `;
+    ;
     tableBody.appendChild(row);
   });
 }
@@ -242,64 +242,66 @@ function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  const logo = new Image();
-  logo.src = "logo.png"; // Pfad zu deinem Logo
-  logo.onload = () => {
-    // Erste Seite: Logo und Titel
-    doc.addImage(logo, 'PNG', 160, 10, 40, 20); // rechts oben
-    doc.setFontSize(22);
-    doc.setTextColor("#333");
-    doc.text("Lasermessungen", 14, 22);
+  doc.setFontSize(18);
+  doc.text("Lasermessungen", 14, 22);
 
-    // Örtlichkeit & Messorgane
-    doc.setFontSize(12);
-    const oertlichkeit = oertlichkeitDropdown.value || "Ort unbekannt";
-    const messorgan1 = document.getElementById("messorgan1").value || "-";
-    const messorgan2 = document.getElementById("messorgan2").value || "-";
-    const messorgan3 = document.getElementById("messorgan3").value || "-";
-    doc.text(`Örtlichkeit: ${oertlichkeit}`, 14, 36);
-    doc.text(`Messorgan 1: ${messorgan1}`, 14, 44);
-    doc.text(`Messorgan 2: ${messorgan2}`, 14, 52);
-    doc.text(`Messorgan 3: ${messorgan3}`, 14, 60);
+  // Örtlichkeit & Messorgane
+  doc.setFontSize(12);
+  const oertlichkeit = oertlichkeitDropdown.value || "Ort unbekannt";
+  const messorgan1 = document.getElementById("messorgan1").value || "-";
+  const messorgan2 = document.getElementById("messorgan2").value || "-";
+  const messorgan3 = document.getElementById("messorgan3").value || "-";
+  doc.text(Örtlichkeit: ${oertlichkeit}, 14, 32);
+  doc.text(Messorgan 1: ${messorgan1}, 14, 40);
+  doc.text(Messorgan 2: ${messorgan2}, 14, 48);
+  doc.text(Messorgan 3: ${messorgan3}, 14, 56);
 
-    const columns = ["Kennzeichen","Marke","Farbe","Km/h","Meter","Uhrzeit","Fahrtrichtung"];
-    const startY = 70;
+  const columns = ["Kennzeichen","Marke","Farbe","Km/h","Meter","Uhrzeit","Fahrtrichtung"];
+  const startY = 64;
 
-    const rows = fahrtListe.map((f, i) => {
-      const highlight = i >= Math.floor(fahrtListe.length / 2);
-      return columns.map(col => {
-        const key = col.toLowerCase();
-        const val = f[key] || f[col.toLowerCase()];
-        return { content: val, styles: highlight ? { fillColor: [220, 240, 255] } : {} };
-      });
-    });
+  // Tabellenzeilen vorbereiten und die zweite Hälfte hervorheben
+  const rows = fahrtListe.map((f, i) => {
+    const highlight = i >= Math.floor(fahrtListe.length / 2); // zweite Hälfte
+    return [{
+      content: f.kennzeichen,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    },{
+      content: f.marke,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    },{
+      content: f.farbe,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    },{
+      content: f.kmh,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    },{
+      content: f.meter,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    },{
+      content: f.uhrzeit,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    },{
+      content: f.richtung,
+      styles: highlight ? { fillColor: [200, 230, 255] } : {}
+    }];
+  });
 
-    doc.autoTable({
-      startY,
-      head: [columns],
-      body: rows,
-      theme: 'grid',
-      headStyles: { fillColor: [76, 175, 80], textColor: 255 },
-      styles: { fontSize: 10 }
-    });
+  doc.autoTable({
+    startY,
+    head: [columns],
+    body: rows,
+    theme: 'grid'
+  });
 
-    const finalY = doc.lastAutoTable.finalY || startY;
-    doc.setFontSize(12);
-    doc.text(`Gesamtanzahl der gemessenen Fahrzeuge: ${fahrtListe.length}`, 14, finalY + 10);
+  const finalY = doc.lastAutoTable.finalY || startY;
+  doc.setFontSize(12);
+  doc.text(Gesamtanzahl der gemessenen Fahrzeuge: ${fahrtListe.length}, 14, finalY + 10);
 
-    // Seite mit Seiteninformationen
-    doc.addPage();
-    doc.setFontSize(18);
-    doc.text("Seiteninformationen", 14, 20);
-    doc.setFontSize(12);
-    const datum = new Date();
-    const datumText = `Erstellt am: ${datum.toLocaleDateString()} um ${datum.toLocaleTimeString()}`;
-    doc.text(datumText, 14, 30);
-    doc.text(`Örtlichkeit: ${oertlichkeit}`, 14, 40);
-    doc.text(`Anzahl der Fahrten: ${fahrtListe.length}`, 14, 50);
-
-    doc.save(`${datum.getDate()}.${datum.getMonth()+1}.${datum.getFullYear()}_Lasermessen_${oertlichkeit}.pdf`);
-  };
+  const datum = new Date();
+  const dd = String(datum.getDate()).padStart(2,"0");
+  const mm = String(datum.getMonth()+1).padStart(2,"0");
+  const yyyy = datum.getFullYear();
+  doc.save(${dd}.${mm}.${yyyy}_Lasermessen_${oertlichkeit}.pdf);
 }
 
 /* ------------------- Autocomplete ------------------- */
@@ -318,7 +320,7 @@ function autocomplete(inputElem, suggestions) {
     filtered.forEach(entry => {
       const div = document.createElement("div");
       div.className = "autocomplete-suggestion";
-      const regex = new RegExp(`(${val})`, "ig");
+      const regex = new RegExp((${val}), "ig");
       div.innerHTML = entry.replace(regex, "<span class='autocomplete-highlight'>$1</span>");
       div.addEventListener("click", () => { inputElem.value = entry; container.style.display = "none"; });
       container.appendChild(div);
